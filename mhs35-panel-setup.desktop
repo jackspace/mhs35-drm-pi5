@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=MHS35 panel layout and touch mapping
+Exec=/usr/local/bin/mhs35-panel-setup.sh
+NoDisplay=true
+X-GNOME-Autostart-Phase=Initialization

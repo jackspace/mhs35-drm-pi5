@@ -1,0 +1,64 @@
+// MHS-3.5inch RPi display (ILI9486 behind a 16-bit shift-register bridge)
+// on the DRM tiny driver "ili9486" (compatible waveshare,rpi-lcd-35) instead of fbtft fb_ili9486.
+// Pins from the vendor mhs35 overlay: DC=GPIO24, RESET=GPIO25, panel=spi0.0, touch=spi0.1, PENIRQ=GPIO17.
+// rotation=180 matches fbtft rotate=90 on the vendor MHS board (ribbon at the top); override with rotation=.
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+			spidev@0 { status = "disabled"; };
+			spidev@1 { status = "disabled"; };
+		};
+	};
+
+	fragment@1 {
+		target = <&gpio>;
+		__overlay__ {
+			mhs35_pins: mhs35_pins {
+				brcm,pins = <17 25 24>;
+				brcm,function = <0 0 0>;
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&spi0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			mhs35: mhs35@0 {
+				compatible = "waveshare,rpi-lcd-35", "ilitek,ili9486";
+				reg = <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&mhs35_pins>;
+				spi-max-frequency = <32000000>;
+				dc-gpios = <&gpio 24 0>;
+				reset-gpios = <&gpio 25 0>;
+				rotation = <180>;
+			};
+
+			mhs35_ts: mhs35-ts@1 {
+				compatible = "ti,ads7846";
+				reg = <1>;
+				spi-max-frequency = <2000000>;
+				interrupts = <17 2>;
+				interrupt-parent = <&gpio>;
+				pendown-gpio = <&gpio 17 1>;
+				ti,x-plate-ohms = /bits/ 16 <60>;
+				ti,pressure-max = /bits/ 16 <255>;
+			};
+		};
+	};
+
+	__overrides__ {
+		speed = <&mhs35>, "spi-max-frequency:0";
+		rotation = <&mhs35>, "rotation:0";
+	};
+};
